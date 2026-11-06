@@ -86,21 +86,21 @@ function describe(index,root,chosen,scope) {
   const nodes=[...selected].map(id=>index.nodes.get(id)).filter(Boolean);
   const edges=index.edges.filter(e=>selected.has(e.source)&&selected.has(e.target));
   const component=graphComponent(index,root.id);
-  const connectedNodeCount=nodes.filter(n=>component.has(n.id)).length;
+  const connectedNodeCount=nodes.reduce((sum,n)=>sum+Number(component.has(n.id)),0);
   const localEvidence=!['Drug','ADR'].includes(root.type);
   return {
     rootId:root.id,rootType:root.type,nodes,edges,
     scope,allCatalog:scope==='all',localEvidence,
     connectedNodeCount,disconnectedNodeCount:nodes.length-connectedNodeCount,
-    truncated:false,completeMechanism:localEvidence?false:hasPhenotypeRoute(edges,root.id,root.type,index.nodes),
+    truncated:false,completeMechanism:scope==='all'||localEvidence?false:hasPhenotypeRoute(edges,root.id,root.type,index.nodes),
     hasPhenotypeMapping:edges.some(e=>e.type==='ADRHPO'),
     clinicalAssociations:edges.filter(e=>e.type==='DrugADR').length,
   };
 }
 
 /** Only real connected routes from the selected Drug/ADR; NO artificial caps. */
-export function extractWorkflow(data,rootId) {
-  const index=makeWorkflowIndex(data), root=index.nodes.get(rootId);
+export function extractWorkflow(data,rootId,prebuiltIndex=null) {
+  const index=prebuiltIndex??makeWorkflowIndex(data), root=index.nodes.get(rootId);
   if(!root)return {nodes:[],edges:[],rootId:null,rootType:null,scope:'related',truncated:false,completeMechanism:false};
   const local=!['Drug','ADR'].includes(root.type);
   const forward=root.type!=='ADR';
@@ -127,8 +127,8 @@ export function extractWorkflow(data,rootId) {
 }
 
 /** ALL canonical KG nodes, including isolated catalog nodes (e.g. 612 HPOs). */
-export function extractAllNodesWorkflow(data,rootId) {
-  const index=makeWorkflowIndex(data);
+export function extractAllNodesWorkflow(data,rootId,prebuiltIndex=null) {
+  const index=prebuiltIndex??makeWorkflowIndex(data);
   const root=index.nodes.get(rootId)??[...index.nodes.values()].find(n=>n.type==='Drug')??index.nodes.values().next().value;
   if(!root)return {nodes:[],edges:[],rootId:null,rootType:null,scope:'all',allCatalog:true,truncated:false,completeMechanism:false};
   return describe(index,root,index.nodes.keys(),'all');
@@ -152,15 +152,64 @@ export function filterWorkflowByTypes(workflow,allowedTypes) {
   const linked=new Set(rootHidden?[]:[workflow.rootId]),queue=[...linked];
   for(let i=0;i<queue.length;i++)for(const id of adjacency.get(queue[i])??[])
     if(!linked.has(id)){linked.add(id);queue.push(id);}
-  const byId=new Map(visibleNodes.map(n=>[n.id,n]));
+  const byId=workflow.allCatalog?null:new Map(visibleNodes.map(n=>[n.id,n]));
   return {
     ...workflow,nodes:visibleNodes,edges:visibleEdges,rootHidden,
     connectedNodeCount:linked.size,
     disconnectedNodeCount:visibleNodes.length-linked.size,
     hiddenNodeCount:workflow.nodes.length-visibleNodes.length,
     hiddenEdgeCount:workflow.edges.length-visibleEdges.length,
-    completeMechanism:!rootHidden&&!workflow.localEvidence&&hasPhenotypeRoute(visibleEdges,workflow.rootId,workflow.rootType,byId),
+    completeMechanism:!workflow.allCatalog&&!rootHidden&&!workflow.localEvidence&&hasPhenotypeRoute(visibleEdges,workflow.rootId,workflow.rootType,byId),
     hasPhenotypeMapping:visibleEdges.some(e=>e.type==='ADRHPO'),
     clinicalAssociations:visibleEdges.filter(e=>e.type==='DrugADR').length,
+  };
+}
+
+/**
+ * Exact HPO-focused workflow. The input must already be the typed subgraph
+ * returned by extractPhenotypeSubgraph; NEVER traverse the global KG here.
+ * The direction of ADRHPO is intentionally ADR -> HPO, so the two phenotype
+ * annotations visually converge on the selected HPO. No new edge is inferred.
+ */
+export function buildPhenotypeWorkflow(data, hpoId) {
+  const nodeById = new Map((data?.nodes ?? [])
+    .filter(node => node?.id && WORKFLOW_TYPES.includes(node.type))
+    .map(node => [node.id, node]));
+  const root = nodeById.get(hpoId);
+  if (!root || root.type !== 'HPO') {
+    return {nodes: [], edges: [], rootId: null, rootType: null, scope: 'phenotype',
+      allCatalog: false, localEvidence: true, truncated: false, completeMechanism: false};
+  }
+  const edges = [];
+  const adjacent = new Map();
+  for (const edge of data?.edges ?? []) {
+    const rule = EDGE_RULES[edge.type];
+    if (!rule) continue;
+    const expectedSourceType = rule.reversed ? rule.to : rule.from;
+    const expectedTargetType = rule.reversed ? rule.from : rule.to;
+    if (nodeById.get(edge.source)?.type !== expectedSourceType ||
+        nodeById.get(edge.target)?.type !== expectedTargetType) continue;
+    edges.push({...edge, evidence: rule.evidence, relationLabel: rule.name});
+    if (!adjacent.has(edge.source)) adjacent.set(edge.source, []);
+    if (!adjacent.has(edge.target)) adjacent.set(edge.target, []);
+    adjacent.get(edge.source).push(edge.target);
+    adjacent.get(edge.target).push(edge.source);
+  }
+  const connected = new Set([hpoId]);
+  const queue = [hpoId];
+  for (let i = 0; i < queue.length; i++) {
+    for (const next of adjacent.get(queue[i]) ?? []) {
+      if (!connected.has(next)) {connected.add(next); queue.push(next);}
+    }
+  }
+  const nodes = [...nodeById.values()];
+  return {
+    rootId: hpoId, rootType: 'HPO', nodes, edges, scope: 'phenotype',
+    allCatalog: false, localEvidence: true, truncated: false,
+    connectedNodeCount: connected.size,
+    disconnectedNodeCount: nodes.length - connected.size,
+    completeMechanism: false,
+    hasPhenotypeMapping: edges.some(e => e.type === 'ADRHPO'),
+    clinicalAssociations: edges.filter(e => e.type === 'DrugADR').length,
   };
 }

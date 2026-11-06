@@ -66,3 +66,19 @@
   background: #fffaf3;
 }
 .kg-biomedical-node.is-reference-only small { color:#a45c16; }
+
+/* The canvas renders a small viewport window, never the full KG as HTML. */
+.kg-canvas-virtual-info{position:absolute;right:12px;bottom:12px;z-index:9;
+  padding:7px 10px;background:#fffefaee;border:1px solid #d6e4f4;
+  border-radius:8px;font-size:10px;color:#456483;pointer-events:none;
+  box-shadow:0 2px 9px #284d7514;max-width:min(85%,550px)}
+.kg-drug-workflow .react-flow__node-biomedical{contain:layout style paint}
+.kg-drug-workflow .react-flow__edge{pointer-events:none}
+
+/* Focused HPO Workflow: one subgraph shared with Sigma, with the HPO root
+   between MONDO Disease (left) and ADR (right). */
+.kg-focused-workflow-chip{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;
+  background:#eaf5ff;border:1px solid #c9e4fe;border-radius:9px;color:#145b9e;
+  font-size:11px;font-weight:750}
+
+.kg-canvas-nav button.kg-workflow-overview{width:auto;white-space:nowrap;padding:4px 9px;font-size:10px;font-weight:750}

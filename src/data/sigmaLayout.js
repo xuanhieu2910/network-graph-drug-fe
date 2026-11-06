@@ -40,9 +40,37 @@ function makeIsland(ids, coordinates, kind) {
 }
 
 /** Each large connected component becomes one independently arranged island. */
-function arrangeConnected(ids, adjacency, degrees) {
+function arrangeConnected(ids, adjacency, degrees, preferredRoot = null) {
   const coord = new Map();
-  if (ids.length === 2) {
+  if (preferredRoot && ids.includes(preferredRoot)) {
+    // Focused HPO remains the center; preserve graph distance as concentric
+    // rings so an unrelated high-degree Drug never replaces the HPO root.
+    const distance = new Map([[preferredRoot, 0]]);
+    const queue = [preferredRoot];
+    for (let i = 0; i < queue.length; i++) for (const next of adjacency.get(queue[i]) || []) {
+      if (distance.has(next)) continue;
+      distance.set(next, distance.get(queue[i]) + 1);
+      queue.push(next);
+    }
+    const rings = new Map();
+    for (const id of ids) {
+      const d = distance.get(id) ?? 0;
+      if (!rings.has(d)) rings.set(d, []);
+      rings.get(d).push(id);
+    }
+    let previousRadius = 0;
+    for (const d of [...rings.keys()].sort((a, b) => a - b)) {
+      const bucket = rings.get(d).sort((a, b) => a.localeCompare(b));
+      if (d === 0) { coord.set(preferredRoot, {x: 0, y: 0}); continue; }
+      const radius = Math.max(previousRadius + 55, bucket.length * 27 / TWO_PI, 55);
+      const offset = (stableHash(`phenotype:${preferredRoot}:${d}`) % 1000) / 1000 * TWO_PI;
+      bucket.forEach((id, i) => {
+        const theta = offset + TWO_PI * i / bucket.length;
+        coord.set(id, {x: radius * Math.cos(theta), y: radius * Math.sin(theta)});
+      });
+      previousRadius = radius;
+    }
+  } else if (ids.length === 2) {
     coord.set(ids[0], { x: -25, y: 0 });
     coord.set(ids[1], { x: 25, y: 0 });
   } else if (ids.length <= 7) {
@@ -155,7 +183,8 @@ export function calculateSigmaLayout(input = {}) {
       singletonBuckets.get(type).push(ids[0]);
     } else {
       movableComponents.push(ids);
-      islands.push(arrangeConnected(ids, adjacency, degrees));
+      islands.push(arrangeConnected(ids, adjacency, degrees,
+        typeof input.rootId === 'string' ? input.rootId : null));
     }
   }
   // Disconnected singletons are *visually* grouped by type, not connected.

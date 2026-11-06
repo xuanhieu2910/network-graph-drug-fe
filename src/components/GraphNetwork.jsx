@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Graph from "graphology";
 import Sigma from "sigma";
 import { calculateSigmaLayout } from "../data/sigmaLayout.js";
-import { NODE_COLORS } from "../config/graphConfig";
+import { NODE_COLORS, EDGE_COLORS } from "../config/graphConfig";
 import "../css/GraphNetwork.css";
 
 const EMPTY_ARRAY = [];
@@ -21,6 +21,8 @@ export default function GraphNetwork({
   types = EMPTY_ARRAY,
   mode = "full",
   selectedId = null,
+  focusId = null,
+  presentation = "default",
   onSelectNode,
   command,
   onViewStats,
@@ -32,6 +34,8 @@ export default function GraphNetwork({
   const rendererRef = useRef(null);
   const dragModeRef = useRef(dragMode);
   const selectedIdRef = useRef(selectedId);
+  const focusIdRef = useRef(focusId);
+  const presentationRef = useRef(presentation);
   const showEdgesRef = useRef(showEdges);
   const selectRef = useRef(onSelectNode);
   const statsRef = useRef(onViewStats);
@@ -42,6 +46,8 @@ export default function GraphNetwork({
 
   dragModeRef.current = dragMode;
   selectedIdRef.current = selectedId;
+  focusIdRef.current = focusId;
+  presentationRef.current = presentation;
   showEdgesRef.current = showEdges;
   selectRef.current = onSelectNode;
   statsRef.current = onViewStats;
@@ -92,9 +98,11 @@ export default function GraphNetwork({
     }));
     return {
       nodes: packedNodes,
-      edges: visibleEdges.map((e) => ({ source: asId(e.source), target: asId(e.target) })),
+      edges: visibleEdges.map((e) => ({ id: String(e.id ?? ''), type: e.type,
+        source: asId(e.source), target: asId(e.target) })),
+      rootId: focusId != null && ids.has(String(focusId)) ? String(focusId) : null,
     };
-  }, [data?.nodes, data?.edges, types, mode, neighborhoodId]);
+  }, [data?.nodes, data?.edges, types, mode, neighborhoodId, focusId]);
 
   useEffect(() => {
     statsRef.current?.({ nodes: prepared.nodes.length, edges: prepared.edges.length });
@@ -165,7 +173,9 @@ export default function GraphNetwork({
         prepared.edges.forEach((edge, i) => {
           if (graph.hasNode(edge.source) && graph.hasNode(edge.target)) {
             graph.addDirectedEdgeWithKey(`edge-${i}`, edge.source, edge.target, {
-              size: 0.55, color: "#CDD7E5",
+              size: edge.type === 'ADRHPO' || edge.type === 'DiseaseHPO' ? 1.65 : 0.75,
+              baseColor: EDGE_COLORS[edge.type] ?? '#CDD7E5',
+              color: EDGE_COLORS[edge.type] ?? '#CDD7E5', type: edge.type,
             });
           }
         });
@@ -195,7 +205,8 @@ export default function GraphNetwork({
           : null;
         observer?.observe(container);
         rendererRef.current = { sigma, graph, observer };
-        applyPresentation(graph, selectedIdRef.current, showEdgesRef.current);
+        applyPresentation(graph, selectedIdRef.current, showEdgesRef.current,
+          focusIdRef.current, presentationRef.current);
         setLayoutInfo({
           components: result.componentCount, islands: result.islandCount,
           fallback: viaFallback,
@@ -215,6 +226,12 @@ export default function GraphNetwork({
       if (disposed || completed) return;
       console.warn("[Drug Network Explorer] Sigma layout worker unavailable; using fallback:", reason);
       stopWorker();
+      if (prepared.nodes.length > 2500 || prepared.edges.length > 10000) {
+        completed = true;
+        setLayoutError(`Worker thất bại: ${reason}. Đã bỏ qua fallback trên main thread vì graph quá lớn; hãy tải lại trang và kiểm tra Worker.`);
+        setBusy(false);
+        return;
+      }
       try {
         renderPositions(calculateSigmaLayout(prepared), true);
       } catch (error) {
@@ -225,7 +242,7 @@ export default function GraphNetwork({
     }
 
     try {
-      worker = new Worker(new URL("./graphLayout.worker.js", import.meta.url), { type: "module" });
+      worker = new Worker(new URL("../workers/graphLayout.worker.js", import.meta.url), { type: "module" });
       worker.onerror = event => {
         event.preventDefault?.();
         fallback(event.message || "Worker script failed to load or execute");
@@ -238,7 +255,7 @@ export default function GraphNetwork({
       };
       worker.postMessage(prepared);
       // Covers Workers hanging without reporting an error.
-      watchdog = setTimeout(() => fallback("Worker did not respond in 8 seconds"), 8000);
+      watchdog = setTimeout(() => fallback("Worker did not respond within 30 seconds"), 30000);
     } catch (error) {
       fallback(error?.message || String(error));
     }
@@ -256,8 +273,8 @@ export default function GraphNetwork({
 
   useEffect(() => {
     const current = rendererRef.current;
-    if (current) applyPresentation(current.graph, selectedId, showEdges);
-  }, [selectedId, showEdges]);
+    if (current) applyPresentation(current.graph, selectedId, showEdges, focusId, presentation);
+  }, [selectedId, showEdges, focusId, presentation]);
 
   useEffect(() => {
     if (rendererRef.current) executeCommand(rendererRef.current.sigma, command);
@@ -273,22 +290,26 @@ export default function GraphNetwork({
   );
 }
 
-function applyPresentation(graph, selectedId, showEdges) {
+function applyPresentation(graph, selectedId, showEdges, focusId, presentation) {
   const selected = selectedId != null && graph.hasNode(String(selectedId)) ? String(selectedId) : null;
-  const neighborhood = selected ? new Set([selected, ...graph.neighbors(selected)]) : null;
-
+  const focus = focusId != null && graph.hasNode(String(focusId)) ? String(focusId) : null;
+  const isPhenotype = presentation === 'phenotype';
+  const neighborhood = !isPhenotype && selected ? new Set([selected, ...graph.neighbors(selected)]) : null;
   graph.updateEachNodeAttributes((id, attrs) => ({
     ...attrs,
-    color: !selected || neighborhood.has(id) ? attrs.baseColor : "#D9E2EE",
-    label: !selected || neighborhood.has(id) ? attrs.baseLabel : "",
-    size: id === selected ? attrs.baseSize * 1.6 : attrs.baseSize,
+    // In HPO focus, don't fade distant upstream genes/proteins: they are
+    // already filtered to valid evidence routes for the chosen phenotype.
+    color: isPhenotype || !selected || neighborhood.has(id) ? attrs.baseColor : '#D9E2EE',
+    label: isPhenotype || !selected || neighborhood.has(id) ? attrs.baseLabel : '',
+    size: id === focus ? attrs.baseSize * 1.95 : id === selected ? attrs.baseSize * 1.45 : attrs.baseSize,
   }));
   graph.updateEachEdgeAttributes((_key, attrs, source, target) => ({
     ...attrs,
     hidden: !showEdges,
-    color: !selected ? "#C8D4E2" :
-      source === selected || target === selected ? "#6A91CA" : "#E4EAF3",
-    size: selected && (source === selected || target === selected) ? 1.2 : 0.5,
+    color: isPhenotype ? attrs.baseColor : !selected ? '#C8D4E2' :
+      source === selected || target === selected ? '#6A91CA' : '#E4EAF3',
+    size: isPhenotype ? (attrs.type === 'DiseaseHPO' || attrs.type === 'ADRHPO' ? 1.65 : 0.75) :
+      selected && (source === selected || target === selected) ? 1.2 : 0.5,
   }));
 }
 

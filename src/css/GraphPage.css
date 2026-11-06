@@ -76,3 +76,99 @@
 .kg-dynamic-pipeline-grid .kg-pipeline-step{min-height:95px;height:auto;padding:9px 5px}
 .kg-class-count{font-size:11px;color:#143e6e;margin-top:3px}
 .kg-dynamic-pipeline-grid .kg-pipeline-step small{overflow-wrap:anywhere}
+
+/* HPO-first search: adequate width, keyboard search, visible evidence counts. */
+.kg-search-intro{font-size:11px;line-height:1.6;color:#537091;margin:11px 0}
+.kg-search-intro b{color:#1265bb}
+.kg-left-panel .kg-search{height:47px;background:#fff;border-color:#9ac6eb}
+.kg-left-panel .kg-search input{font-size:12px;min-width:0}
+.kg-left-panel .kg-search input::placeholder{font-size:11px;color:#7793ad}
+.kg-search-empty{padding:12px 9px;color:#879bb4;font-size:11px;line-height:1.6}
+.kg-suggestions{max-height:312px;position:relative;z-index:4}
+.kg-suggestions button:focus-visible{outline:2px solid #1c79ed;outline-offset:-2px;background:#f0f7ff}
+.kg-suggestions button b{font-size:11px}
+.kg-suggestions button small{font-size:10px;line-height:1.5}
+.kg-active-hpo{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px;padding:11px;
+ background:#edfafb;border:1px solid #a5e1ea;border-radius:10px;color:#275d72;font-size:11px}
+.kg-active-hpo span{width:100%;line-height:1.5;overflow-wrap:anywhere}
+.kg-active-hpo button{border:1px solid #90c8df;background:white;color:#116b9c;
+ border-radius:7px;padding:7px 9px;font-size:10px;font-weight:700}
+.kg-active-hpo button:hover{background:#d7f4fa}
+
+/* Phenotype evidence panel, deliberately two branches meeting at one HPO. */
+.kg-phenotype-summary{padding:16px;background:white;border:1px solid #cfe7ee;border-radius:14px;
+ box-shadow:0 5px 16px #24446f0a;display:grid;gap:12px}
+.kg-phenotype-summary-head{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.kg-phenotype-summary-head small{font-size:10px;color:#657f9c;font-weight:700}
+.kg-phenotype-summary-head h3{font-size:15px;margin:4px 0 3px;color:#0f638a;overflow-wrap:anywhere}
+.kg-phenotype-summary-head code{font-size:11px;color:#4086a6}
+.kg-phenotype-visible-count{font-size:11px;color:#426885;background:#f0f7ff;padding:7px 9px;border-radius:8px}
+.kg-phenotype-scopes{display:flex;gap:7px;flex-wrap:wrap}
+.kg-phenotype-scopes button{font-size:11px;font-weight:700;color:#496b8b;border:1px solid #d6e4f1;
+ padding:9px 12px;background:#f8fbff;border-radius:8px}
+.kg-phenotype-scopes button.active{color:#0965c7;background:#e5f3ff;border-color:#68a8ec}
+.kg-phenotype-scopes button:focus-visible{outline:3px solid #93c4ff;outline-offset:1px}
+.kg-phenotype-branches{display:grid;grid-template-columns:minmax(0,1fr) minmax(125px,.63fr) minmax(0,1fr);gap:10px;align-items:stretch}
+.kg-phenotype-side{border:1px solid #e0eaf3;border-radius:10px;min-width:0;padding:11px}
+.kg-phenotype-side h4{margin:0 0 8px;font-size:12px;display:flex;justify-content:space-between;gap:8px}
+.kg-phenotype-side h4 span{border-radius:15px;padding:1px 6px;background:#f1f6fc}
+.kg-phenotype-side p{color:#8b9db0;font-size:10px;line-height:1.55;margin:5px 0}
+.kg-phenotype-entities{display:grid;gap:6px}
+.kg-phenotype-entities>div{display:flex;gap:7px;align-items:center;min-width:0;font-size:10px;color:#3d5976}
+.kg-phenotype-entities>div svg{flex-shrink:0}
+.kg-phenotype-entities>div span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kg-phenotype-entities small{color:#889bb1;font-size:10px}
+.kg-phenotype-intersection{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;
+ border:1px dashed #85cbd4;border-radius:11px;padding:13px 7px;text-align:center;color:#087f97;background:#f0fbfc;font-size:11px}
+.kg-phenotype-intersection strong{font-size:10px;line-height:1.5;color:#487384}
+.kg-phenotype-explanation{margin:0;font-size:11px;line-height:1.55;color:#59738e}
+.kg-phenotype-warning{margin:0;padding:9px 11px;background:#fff7ed;border:1px solid #ffdfad;
+ border-radius:8px;color:#9a5f1c;font-size:11px;line-height:1.5}
+.kg-empty-hpo-canvas{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;
+ align-items:center;text-align:center;gap:6px;color:#5591b0;background:#f8fbff;padding:40px}
+.kg-empty-hpo-canvas h3{color:#175779;font-size:16px;margin:7px 0}
+.kg-empty-hpo-canvas p{font-size:12px;line-height:1.65;max-width:390px;color:#7291a9}
+@media(max-width:760px){.kg-phenotype-branches{grid-template-columns:minmax(0,1fr) minmax(95px,.65fr) minmax(0,1fr)}
+ .kg-phenotype-summary{padding:12px}.kg-phenotype-scopes button{flex:1}}
+@media(max-width:490px){.kg-phenotype-branches{grid-template-columns:1fr}.kg-phenotype-intersection{padding:10px}}
+
+/* Shared ADR ∩ Disease phenotype finder. Only validated, typed edges count. */
+.kg-hpo-intersection-filter{display:flex;align-items:center;gap:9px;margin:11px 0 8px;padding:11px 9px;
+ border:1px solid #d3e3f0;border-radius:10px;background:#f8fbff;cursor:pointer;min-width:0}
+.kg-hpo-intersection-filter.is-active{border-color:#45a8bf;background:#e9f9fb}
+.kg-hpo-intersection-filter input{width:16px;height:16px;accent-color:#0789a5;flex-shrink:0;cursor:pointer}
+.kg-hpo-intersection-filter-copy{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}
+.kg-hpo-intersection-filter-copy b{font-size:11px;color:#17587d;line-height:1.35}
+.kg-hpo-intersection-filter-copy small{font-size:10px;color:#617e97;line-height:1.4}
+.kg-hpo-intersection-filter>strong{padding:4px 6px;border-radius:7px;background:#d9eef4;color:#096983;
+ font-size:11px;font-variant-numeric:tabular-nums}
+.kg-hpo-result-wrap{margin-top:8px;border:1px solid #dae8f4;border-radius:9px;overflow:hidden}
+.kg-hpo-result-header{display:flex;justify-content:space-between;align-items:center;gap:6px;
+ padding:9px;background:#f0f7fd;color:#1a5d86;font-size:11px}
+.kg-hpo-result-header small{font-size:10px;color:#5d7997}
+.kg-hpo-result-wrap .kg-suggestions{margin:0;border:0;border-radius:0;max-height:350px;overflow-y:auto}
+.kg-hpo-result-wrap .kg-suggestions button[aria-selected="true"]{background:#e1f7ff}
+.kg-hpo-match-indicator{display:flex;align-items:center;justify-content:center;color:#087f94;margin-left:auto}
+.kg-hpo-show-more{width:100%;padding:10px;border:0;border-top:1px solid #dfebf4;background:#f5fbff;
+ color:#116aa0;font-weight:700;font-size:11px;cursor:pointer}
+.kg-hpo-show-more:hover{background:#e7f5ff}
+.kg-overlap-help{font-size:10px;line-height:1.6;padding:8px 2px;color:#517a94}
+.kg-hpo-result-wrap .kg-suggestions button>span:nth-child(2){flex:1;min-width:0}
+.kg-hpo-result-wrap .kg-suggestions .kg-hpo-match-indicator{display:flex;flex-shrink:0}
+.kg-hpo-intersection-filter:focus-within{outline:2px solid #7fcce0;outline-offset:2px}
+
+/* Unified HPO Focus view selector: the same selected subgraph in both renderers. */
+.kg-hpo-view-switch{display:flex;gap:4px;align-items:center;padding:4px;background:#edf5ff;
+  border:1px solid #d5e6f8;border-radius:10px;margin:10px 0 9px;width:max-content;max-width:100%}
+.kg-hpo-view-switch button{display:flex;align-items:center;gap:6px;padding:8px 14px;border:0;
+  background:transparent;border-radius:7px;font-size:12px;font-weight:750;color:#416488;cursor:pointer}
+.kg-hpo-view-switch button.active{background:white;color:#116cd4;box-shadow:0 2px 8px #295c9d1a}
+.kg-hpo-view-switch button:focus-visible{outline:2px solid #116cd4;outline-offset:2px}
+
+/* HPO Focus: make every biological layer visible in the summary even when
+   its workflow column is outside the current viewport. */
+.kg-phenotype-type-overview{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.kg-phenotype-type-count{display:inline-flex;align-items:center;gap:5px;border:1px solid #dfebf6;
+  border-radius:8px;padding:6px 8px;font-size:11px;color:#3a5372;background:#f9fcff}
+.kg-phenotype-type-count svg{color:var(--hpo-type-color)}
+.kg-phenotype-type-count b{font-variant-numeric:tabular-nums;background:#edf4fc;color:#274e77;border-radius:5px;padding:2px 5px}

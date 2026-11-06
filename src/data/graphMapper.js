@@ -154,13 +154,36 @@ export function normalizeHpoTerm(row) {
  * Numeric database record IDs are not accepted as MONDO IDs.
  * HPO numeric codes are allowed only when supplied in an explicit HP field.
  */
-export function normalizeMondoHpoRelation(row) {
+export function normalizeMondoHpoRelation(row, foreignKeys={}) {
   if (!isRow(row)) return null;
-  const rawMondo=first(row,["mondo_id","MONDO_ID","mondoId","disease_mondo_id","diseaseMondoId","disease_id"]);
-  const rawHpo=first(row,["hpo_id","HPO_ID","hpoId","hp_id","HP_ID","hpId","hpo_term_id","phenotype_id"]);
+  const mondoRef=first(row,["mondo_id","MONDO_ID","mondoId","disease_mondo_id","diseaseMondoId","disease_id"]);
+  const hpoRef=first(row,["hpo_id","HPO_ID","hpoId","hp_id","HP_ID","hpId","hpo_term_id","phenotype_id"]);
+  // database_id is a database FOREIGN KEY, not an HP: code. Resolve it only
+  // via the explicitly loaded HPO catalog; never interpret 55 as HP:0000055.
+  const rawMondo=/^MONDO[:_]\d{1,7}$/i.test(mondoRef??'') ? mondoRef :
+    foreignKeys.mondoDatabaseIds?.get(mondoRef);
+  const databaseId=first(row,['database_id','databaseId','human_phenotype_database_id','hpo_database_id']);
+  const rawHpo=/^(?:HP[:_])?\d{1,7}$/i.test(hpoRef??'') ? hpoRef :
+    /^HP[:_]\d{1,7}$/i.test(databaseId??'') ? databaseId :
+    foreignKeys.hpoDatabaseIds?.get(hpoRef)??foreignKeys.hpoDatabaseIds?.get(databaseId);
   if (!rawMondo || !/^MONDO[:_]\d{1,7}$/i.test(rawMondo)) return null;
   if (!rawHpo || !/^(?:HP[:_])?\d{1,7}$/i.test(rawHpo)) return null;
   return {...row,mondo_id:canonical("Disease",rawMondo),hpo_id:canonical("HPO",rawHpo)};
+}
+
+/** Map internal database PKs to external ontology IDs only when unambiguous. */
+function buildDatabaseIdIndex(rows,externalField,normalizer) {
+  const mapped=new Map(),ambiguous=new Set();
+  for(const row of rows){
+    if(!isRow(row))continue;
+    const key=first(row,['database_id','databaseId','id','ID']);
+    const external=normalizer ? val(normalizer(row),externalField) : val(row,externalField);
+    if(!key || !external)continue;
+    if(mapped.has(key)&&mapped.get(key)!==external)ambiguous.add(key);
+    else mapped.set(key,external);
+  }
+  for(const key of ambiguous)mapped.delete(key);
+  return mapped;
 }
 
 function layoutConnectedComponents(nodes, edges) {
@@ -410,6 +433,13 @@ export function buildGraphData(collections={}, apiErrors={}) {
     node.original.protein_sequences.push({...row});
     sources.proteinSequences.added++;
   }
+  // The relation endpoint may store database_id (HPO table PK) and
+  // disease_id (MONDO table PK) rather than external ontology codes.
+  // Build joins ONLY from the loaded catalogs, rejecting ambiguous mappings.
+  const foreignKeys={
+    hpoDatabaseIds:buildDatabaseIdIndex(toArray(collections.hpoTerms),'hpo_id',normalizeHpoTerm),
+    mondoDatabaseIds:buildDatabaseIdIndex(toArray(collections.diseases),'mondo_id'),
+  };
   // Identify HPO codes referenced in edges but absent from the validated HPO
   // catalog. They do NOT enter nodes[] or the sidebar HPO total.
   const unlistedHpoIds=new Set();
@@ -418,7 +448,7 @@ export function buildGraphData(collections={}, apiErrors={}) {
     const distinct=new Set();
     for (const row of toArray(collections[collection])) {
       const raw=collection === "mondoPhenotypes"
-        ? normalizeMondoHpoRelation(row)?.hpo_id
+        ? normalizeMondoHpoRelation(row,foreignKeys)?.hpo_id
         : (isRow(row) ? val(row,"hpo_id") : null);
       if (!raw) continue;
       const code=canonical("HPO",raw);
@@ -449,7 +479,7 @@ export function buildGraphData(collections={}, apiErrors={}) {
     sources[model.collection].edgesAdded=0;
     for (const originalRow of rows) {
       if (!isRow(originalRow)) {invalidEdges++; if (model.collection==="mondoPhenotypes") invalidMondoHpoRelationRows++;continue;}
-      const row=model.collection === "mondoPhenotypes" ? normalizeMondoHpoRelation(originalRow) : originalRow;
+      const row=model.collection === "mondoPhenotypes" ? normalizeMondoHpoRelation(originalRow,foreignKeys) : originalRow;
       if (!row) {invalidEdges++;invalidMondoHpoRelationRows++;continue;}
       const sourceKey=val(row,model.source),targetKey=val(row,model.target);
       if (!sourceKey || !targetKey) {invalidEdges++; continue;}

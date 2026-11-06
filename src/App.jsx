@@ -1,9 +1,10 @@
+import { lazy, Suspense } from "react";
 import { Link, Routes, Route } from "react-router";
 
 import HomePage from "./pages/HomePage";
 import DrugsPage from "./pages/DrugsPage";
 import DrugDetailPage from "./pages/DrugDetailPage";
-import GraphPage from "./pages/GraphPage";
+const GraphPage = lazy(() => import("./pages/GraphPage"));
 import ProteinsPage from "./pages/ProteinsPage";
 import ProteinDetailPage from "./pages/ProteinDetailPage";
 
@@ -34,7 +35,7 @@ export default function App() {
           <Route path="/proteins" element={<ProteinsPage />}/>
           <Route path="/proteins/:code" element={<ProteinDetailPage />}/>
 
-          <Route path="/graph" element={<GraphPage />} />
+          <Route path="/graph" element={<Suspense fallback={<main className="main-content">Đang mở Knowledge Graph…</main>}><GraphPage /></Suspense>} />
         </Routes>
       </main>
     </div>
