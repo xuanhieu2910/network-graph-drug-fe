@@ -1,0 +1,193 @@
+/* ===== PAGE ===== */
+
+.drug-detail-page {
+  width: 100%;
+  max-width: 1200px;
+  min-width: 0;
+
+  margin: 0 auto;
+  padding: 24px;
+
+  box-sizing: border-box;
+}
+
+/* ===== NAVIGATION ===== */
+
+.drug-detail-navigation {
+  margin-bottom: 20px;
+}
+
+.drug-back-link {
+  color: #2563eb;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.drug-back-link:hover {
+  text-decoration: underline;
+}
+
+/* ===== HEADER ===== */
+
+.drug-detail-header {
+  margin-bottom: 24px;
+}
+
+.drug-detail-header h2 {
+  margin: 0 0 10px;
+  font-size: 26px;
+  color: #0f172a;
+}
+
+.drug-detail-header h3 {
+  margin: 0 0 12px;
+  font-size: 20px;
+  font-weight: 500;
+  color: #334155;
+
+  overflow-wrap: anywhere;
+}
+
+.drug-detail-id {
+  display: inline-block;
+
+  padding: 6px 12px;
+  border-radius: 6px;
+
+  background-color: #dbeafe;
+  color: #1d4ed8;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  overflow-wrap: anywhere;
+}
+
+/* ===== CARD ===== */
+
+.drug-detail-card {
+  width: 100%;
+  min-width: 0;
+
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+
+  padding: 24px;
+
+  box-sizing: border-box;
+}
+
+.drug-detail-card h3 {
+  margin: 0 0 24px;
+
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* ===== GRID ===== */
+
+.drug-detail-grid {
+  display: grid;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+/* ===== FIELD ===== */
+
+.drug-detail-field {
+  min-width: 0;
+
+  padding: 14px;
+
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.drug-detail-field-full {
+  grid-column: 1 / -1;
+}
+
+/* ===== LABEL ===== */
+
+.drug-detail-label {
+  margin-bottom: 8px;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* ===== VALUE ===== */
+
+.drug-detail-value {
+  width: 100%;
+  min-width: 0;
+
+  font-size: 14px;
+  line-height: 1.7;
+
+  color: #1e293b;
+
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* ===== SMILES ===== */
+
+.drug-detail-smiles {
+  padding: 12px;
+
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 13px;
+
+  color: #0369a1;
+
+  box-sizing: border-box;
+
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+/* ===== ERROR ===== */
+
+.drug-detail-error {
+  margin-top: 20px;
+  color: #dc2626;
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 768px) {
+  .drug-detail-page {
+    padding: 12px;
+  }
+
+  .drug-detail-card {
+    padding: 14px;
+  }
+
+  .drug-detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .drug-detail-field-full {
+    grid-column: 1;
+  }
+
+  .drug-detail-header h2 {
+    font-size: 22px;
+  }
+}

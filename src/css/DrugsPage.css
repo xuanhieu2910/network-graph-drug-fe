@@ -1,0 +1,165 @@
+/* ===== PAGE ===== */
+
+.drugs-page {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* ===== HEADER ===== */
+
+.drugs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.drugs-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #1e293b;
+}
+
+.drugs-header span {
+  font-size: 14px;
+  color: #64748b;
+}
+
+/* ===== TABLE CONTAINER ===== */
+
+.drugs-table-container {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+/* ===== TABLE ===== */
+
+.drugs-table {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+
+  table-layout: fixed;
+  border-collapse: collapse;
+
+  font-size: 13px;
+  background-color: #ffffff;
+}
+
+/* ===== TABLE HEADER ===== */
+
+.drugs-table thead {
+  background-color: #1e293b;
+}
+
+.drugs-table th {
+  padding: 12px 8px;
+
+  color: #ffffff;
+  text-align: left;
+  font-weight: 600;
+
+  vertical-align: middle;
+  border: 1px solid #334155;
+
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* ===== TABLE BODY ===== */
+
+.drugs-table td {
+  padding: 10px 8px;
+
+  color: #334155;
+  vertical-align: top;
+
+  border: 1px solid #e2e8f0;
+
+  /* Tự động xuống dòng */
+  white-space: normal;
+
+  /* Ngắt chuỗi dài không có khoảng trắng */
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* ===== SMILES ===== */
+
+.drugs-table .smiles-cell {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+  color: #0369a1;
+
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+/* ===== ROW STYLE ===== */
+
+.drugs-table tbody tr:nth-child(even) {
+  background-color: #f8fafc;
+}
+
+.drugs-table tbody tr:hover {
+  background-color: #eff6ff;
+}
+
+/* ===== LINKS ===== */
+
+.drug-link {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+
+  overflow-wrap: anywhere;
+}
+
+.drug-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+/* ===== EMPTY & ERROR ===== */
+
+.drugs-empty {
+  text-align: center;
+  padding: 30px !important;
+  color: #64748b;
+}
+
+.drugs-error {
+  color: #dc2626;
+}
+
+/* ===== SMALL SCREENS ===== */
+
+@media (max-width: 1024px) {
+  .drugs-page {
+    padding: 10px;
+  }
+
+  .drugs-table {
+    font-size: 11px;
+  }
+
+  .drugs-table th,
+  .drugs-table td {
+    padding: 6px 4px;
+  }
+
+  .drugs-table .smiles-cell {
+    font-size: 10px;
+  }
+}
